@@ -40,6 +40,9 @@ android {
 }
 
 dependencies {
+    // Jetpack Compose Integration
+    implementation("androidx.navigation:navigation-compose:2.9.8")
+
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
