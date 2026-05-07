@@ -4,7 +4,7 @@ interface Destinations{
     val route: String
 }
 
-object Settings: Destinations{
+object SettingsPanel: Destinations{
     override val route = "settings"
 }
 

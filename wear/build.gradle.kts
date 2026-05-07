@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.21"
 }
 
 android {
@@ -42,6 +43,12 @@ android {
 dependencies {
     // Jetpack Compose Integration
     implementation("androidx.navigation:navigation-compose:2.9.8")
+
+    // Typed DataStore for custom data objects (for example, using Proto or JSON).
+    implementation("androidx.datastore:datastore:1.2.1")
+
+    // JSON Serializer
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))
