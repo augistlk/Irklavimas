@@ -27,6 +27,7 @@ import com.augistlk.irklavimas.presentation.model.Settings
 import com.augistlk.irklavimas.presentation.model.SettingsSerializer
 import com.augistlk.irklavimas.presentation.theme.IrklavimasTheme
 import com.augistlk.irklavimas.presentation.ui.MainMenuScreen
+import com.augistlk.irklavimas.presentation.ui.SessionScreen
 import com.augistlk.irklavimas.presentation.ui.SettingsScreen
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -50,7 +51,7 @@ class MainActivity : ComponentActivity() {
 fun WearApp() {
     IrklavimasTheme {
         val navController = rememberNavController()
-        AppScaffold {
+        AppScaffold() {
             ScreenScaffold{
                 innerPadding ->
                     IrklavimasNavHost(
@@ -87,6 +88,9 @@ fun IrklavimasNavHost(
                 onApply = TODO(),
                 onCancel = TODO()
             )
+        }
+        composable(route = Session.route) {
+            SessionScreen()
         }
     }
 }

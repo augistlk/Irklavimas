@@ -46,6 +46,7 @@ dependencies {
 
     // Typed DataStore for custom data objects (for example, using Proto or JSON).
     implementation("androidx.datastore:datastore:1.2.1")
+    implementation(libs.androidx.compose.material)
 
     // JSON Serializer
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
