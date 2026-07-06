@@ -50,6 +50,8 @@ dependencies {
 
     // JSON Serializer
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    // Location stuff
+    implementation("com.google.android.gms:play-services-location:21.4.0")
 
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))

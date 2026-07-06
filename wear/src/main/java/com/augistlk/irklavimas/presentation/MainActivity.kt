@@ -6,15 +6,16 @@
 package com.augistlk.irklavimas.presentation
 
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,17 +30,24 @@ import com.augistlk.irklavimas.presentation.theme.IrklavimasTheme
 import com.augistlk.irklavimas.presentation.ui.MainMenuScreen
 import com.augistlk.irklavimas.presentation.ui.SessionScreen
 import com.augistlk.irklavimas.presentation.ui.SettingsScreen
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationServices
 
 val Context.dataStore: DataStore<Settings> by dataStore(
     fileName = "settings.json",
     serializer = SettingsSerializer,
 )
 
+lateinit var fusedLocationClient: FusedLocationProviderClient
+lateinit var locationCallback: LocationCallback
+
 class MainActivity : ComponentActivity() {
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         setContent {
             WearApp()
@@ -47,11 +55,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun WearApp() {
     IrklavimasTheme {
         val navController = rememberNavController()
-        AppScaffold() {
+        AppScaffold {
             ScreenScaffold{
                 innerPadding ->
                     IrklavimasNavHost(
@@ -63,6 +72,7 @@ fun WearApp() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun IrklavimasNavHost(
     navController: NavHostController,
@@ -95,6 +105,7 @@ fun IrklavimasNavHost(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @WearPreviewDevices
 @WearPreviewFontScales
 @Composable
