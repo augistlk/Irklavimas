@@ -2,12 +2,10 @@ package com.augistlk.irklavimas.presentation.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Looper
 import android.os.SystemClock
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,7 +38,6 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 
-@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun SessionScreen(
 
@@ -137,7 +134,6 @@ fun ElapsedTimeChip(startTime: Long){
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun TempasChip(
     startGPSString: String

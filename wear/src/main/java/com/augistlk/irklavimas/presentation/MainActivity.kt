@@ -6,11 +6,9 @@
 package com.augistlk.irklavimas.presentation
 
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -43,7 +41,6 @@ lateinit var fusedLocationClient: FusedLocationProviderClient
 lateinit var locationCallback: LocationCallback
 
 class MainActivity : ComponentActivity() {
-    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -55,7 +52,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun WearApp() {
     IrklavimasTheme {
@@ -72,7 +68,6 @@ fun WearApp() {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun IrklavimasNavHost(
     navController: NavHostController,
@@ -105,7 +100,6 @@ fun IrklavimasNavHost(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
 @WearPreviewDevices
 @WearPreviewFontScales
 @Composable
