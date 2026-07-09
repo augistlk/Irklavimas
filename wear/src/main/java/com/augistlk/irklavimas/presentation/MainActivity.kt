@@ -89,10 +89,7 @@ fun IrklavimasNavHost(
             )
         }
         composable(route = SettingsPanel.route){
-            SettingsScreen(
-                onApply = TODO(),
-                onCancel = TODO()
-            )
+            SettingsScreen()
         }
         composable(route = Session.route) {
             SessionScreen()
