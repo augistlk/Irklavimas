@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,8 +30,12 @@ import androidx.core.content.ContextCompat
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
+import com.augistlk.irklavimas.presentation.dataStore
 import com.augistlk.irklavimas.presentation.fusedLocationClient
 import com.augistlk.irklavimas.presentation.locationCallback
+import com.augistlk.irklavimas.presentation.model.EnergySaverSetting
+import com.augistlk.irklavimas.presentation.model.PaceSetting
+import com.augistlk.irklavimas.presentation.model.Settings
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
@@ -39,11 +45,10 @@ import kotlin.time.Duration.Companion.milliseconds
 
 
 @Composable
-fun SessionScreen(
-
-){
+fun SessionScreen(){
     var startGPSString by remember { mutableStateOf("NO GPS") }
     val context = LocalContext.current
+    val settings by context.dataStore.data.collectAsState(Settings(loaded = false))
     val permissionArray = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
 
     // Initialize the permission launcher
@@ -99,8 +104,16 @@ fun SessionScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Tempas")
-            TempasChip(startGPSString)
+            val tempasString = if (settings.paceSetting == PaceSetting.pace) {
+                "Tempas (min/km)"
+            } else {
+                "Greitis (km/h)"
+            }
+            Text(text = tempasString)
+            TempasChip(
+                startGPSString = startGPSString,
+                settings = settings
+            )
         }
     }
 }
@@ -116,7 +129,7 @@ fun ElapsedTimeChip(startTime: Long){
         }
     }
     val hours = elapsedTime / 1000 / 60 / 60
-    val minutes = elapsedTime / 1000 / 60
+    val minutes = elapsedTime / 1000 / 60 % 60
     val seconds = elapsedTime / 1000 % 60
     val timeString: String = if (hours == 0L) {
         "%02d:%02d".format(minutes, seconds)
@@ -136,45 +149,65 @@ fun ElapsedTimeChip(startTime: Long){
 
 @Composable
 fun TempasChip(
-    startGPSString: String
+    startGPSString: String,
+    settings: Settings
 ){
     val context = LocalContext.current
     var resultString by remember { mutableStateOf(startGPSString) }
+    var GPSInterval: Long
 
-    val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
-        .setMinUpdateIntervalMillis(1000)
-        .build()
+    if (settings.loaded) {
+        GPSInterval = when(settings.energySaverSetting){
+            EnergySaverSetting.off -> 500
+            EnergySaverSetting.low -> 1000
+            EnergySaverSetting.high -> 2500
+        }
 
-    locationCallback = object : LocationCallback() {
-        override fun onLocationResult(result: LocationResult) {
-            val location = result.lastLocation ?: return
-            if (location.hasSpeed() && location.speed > 0.1f) {
-                val speed = location.speed
-                val pace = 16.6666667 / speed
-                val minutes = pace.toInt()
-                val seconds = ((pace % 1) * 60).toInt()
-                resultString = "%02d:%02d".format(minutes, seconds)
-            } else {
-                resultString = "--:--"
+        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, GPSInterval)
+            .setMinUpdateIntervalMillis(GPSInterval)
+            .build()
+
+        Log.i("GPSInterval", GPSInterval.toString())
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                val location = result.lastLocation ?: return
+                if (location.hasSpeed() && location.speed > 0.1f) {
+                    val speed = location.speed
+                    val pace = 16.6666667 / speed
+                    val minutes = pace.toInt()
+                    val seconds = ((pace % 1) * 60).toInt()
+                    resultString = if (settings.paceSetting == PaceSetting.pace) {
+                        "%02d:%02d".format(minutes, seconds)
+                    } else {
+                        "%.1f".format(speed * 3.6)
+                    }
+                } else {
+                    resultString = if (settings.paceSetting == PaceSetting.pace) {
+                        "--:--"
+                    } else {
+                        "-.-"
+                    }
+                }
+
             }
-
         }
-    }
 
-    DisposableEffect(Unit) {
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                Looper.getMainLooper()
-            )
-        }
-        onDispose {
-            fusedLocationClient.removeLocationUpdates(locationCallback)
+        DisposableEffect(Unit) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+                )
+            }
+            onDispose {
+                fusedLocationClient.removeLocationUpdates(locationCallback)
+            }
         }
     }
 

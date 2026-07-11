@@ -31,7 +31,8 @@ data class EnergySaverOption (
 @Serializable
 data class Settings(
     val paceSetting: PaceSetting = PaceSetting.pace,
-    val energySaverSetting: EnergySaverSetting = EnergySaverSetting.off
+    val energySaverSetting: EnergySaverSetting = EnergySaverSetting.off,
+    val loaded: Boolean = true
 )
 
 object SettingsSerializer : Serializer<Settings> {
