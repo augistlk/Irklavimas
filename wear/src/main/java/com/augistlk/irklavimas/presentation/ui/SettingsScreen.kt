@@ -1,6 +1,7 @@
 package com.augistlk.irklavimas.presentation.ui
 
 import android.content.Context
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicText
@@ -53,7 +55,7 @@ import kotlinx.coroutines.launch
 val maxChipTextFontSize = 20.sp
 
 enum class ShownDialog{
-    None, Energy, Pace
+    None, Energy, Pace, Debug
 }
 
 @Composable
@@ -62,70 +64,39 @@ fun SettingsScreen() {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val settings by context.dataStore.data.collectAsState(initial = Settings())
-    Column(
+    LazyColumn(
         Modifier.fillMaxSize()
     ) {
-        Text(
-            text = "Nustatymai",
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp)
-        )
-        Chip(
-            onClick = { currentDialog = ShownDialog.Energy },
-            colors = ChipDefaults.chipColors(),
-            border = ChipDefaults.chipBorder(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxHeight()
-            ){
-                Icon(
-                    painter = painterResource(R.drawable.energy_savings_leaf_24dp),
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                BasicText(
-                    text = "Energijos taupymas",
-                    autoSize = TextAutoSize.StepBased(
-                        maxFontSize = maxChipTextFontSize
-                    ),
-                    style = TextStyle(fontWeight = FontWeight.Bold),
-                    softWrap = false
-                )
-            }
+        item {
+            Text(
+                text = "Nustatymai",
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            )
         }
-        Chip(
-            onClick = { currentDialog = ShownDialog.Pace },
-            colors = ChipDefaults.chipColors(),
-            border = ChipDefaults.chipBorder(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxHeight()
-            ){
-                Icon(
-                    painter = painterResource(R.drawable.pace_24dp),
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                BasicText(
-                    text = "Tempas",
-                    autoSize = TextAutoSize.StepBased(
-                        maxFontSize = maxChipTextFontSize
-                    ),
-                    style = TextStyle(fontWeight = FontWeight.Bold),
-                    softWrap = false
-                )
-            }
+        item {
+            SettingsChip(
+                iconResource = R.drawable.energy_savings_leaf_24dp,
+                text = "Energijos Taupymas",
+                onClick = {currentDialog = ShownDialog.Energy}
+            )
+        }
+        item {
+            SettingsChip(
+                iconResource = R.drawable.pace_24dp,
+                text = "Tempas",
+                onClick = {currentDialog = ShownDialog.Pace}
+            )
+        }
+        item {
+            SettingsChip(
+                iconResource = R.drawable.bug_report_24dp,
+                text = "Debug",
+                onClick = {currentDialog = ShownDialog.Debug}
+            )
         }
     }
 
@@ -144,6 +115,49 @@ fun SettingsScreen() {
             settings = settings,
             context = context
         )
+    }
+    if (currentDialog == ShownDialog.Debug) {
+        DebugDialog(
+            onDismiss = { currentDialog = ShownDialog.None },
+            coroutineScope = coroutineScope,
+            settings = settings,
+            context = context
+        )
+    }
+}
+
+@Composable
+fun SettingsChip(
+    @DrawableRes iconResource: Int,
+    text: String,
+    onClick: () -> Unit,
+){
+    Chip(
+        onClick = onClick,
+        colors = ChipDefaults.chipColors(),
+        border = ChipDefaults.chipBorder(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxHeight()
+        ) {
+            Icon(
+                painter = painterResource(iconResource),
+                contentDescription = null,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            BasicText(
+                text = text,
+                autoSize = TextAutoSize.StepBased(
+                    maxFontSize = maxChipTextFontSize
+                ),
+                style = TextStyle(fontWeight = FontWeight.Bold),
+                softWrap = false
+            )
+        }
     }
 }
 
@@ -241,6 +255,55 @@ fun PaceDialog(
                         onClick = null // null recommended for accessibility with screen readers
                     )
                     Text(text = option.text, modifier = Modifier.padding(start = 16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DebugDialog(
+    onDismiss: () -> Unit,
+    coroutineScope: CoroutineScope,
+    settings: Settings,
+    context: Context
+) {
+    Dialog(
+        onDismissRequest = onDismiss
+    ) {
+        val debugOptions = listOf(
+            Pair("Įjungta", true),
+            Pair("Išjungta", false)
+        )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .selectableGroup()
+                .fillMaxSize()
+                .background(color = Color.Black)
+        ) {
+            debugOptions.forEach { (text, value) ->
+                Row(
+                    Modifier.fillMaxWidth()
+                        .height(56.dp)
+                        .selectable(
+                            selected = (value == settings.debug),
+                            onClick = {
+                                coroutineScope.launch {
+                                    updateSettings(context = context) { it.copy(debug = value) }
+                                }
+                                onDismiss()
+                            },
+                            role = Role.RadioButton
+                        )
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = (value == settings.debug),
+                        onClick = null
+                    )
+                    Text(text = text, modifier = Modifier.padding(start = 16.dp))
                 }
             }
         }

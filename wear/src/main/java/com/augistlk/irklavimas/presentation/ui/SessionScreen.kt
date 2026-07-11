@@ -2,6 +2,7 @@ package com.augistlk.irklavimas.presentation.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
@@ -9,8 +10,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +44,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.delay
+import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -154,7 +158,9 @@ fun TempasChip(
 ){
     val context = LocalContext.current
     var resultString by remember { mutableStateOf(startGPSString) }
+    var debugString by remember { mutableStateOf("DEBUG") }
     var GPSInterval: Long
+    var lastLocation = Location("")
 
     if (settings.loaded) {
         GPSInterval = when(settings.energySaverSetting){
@@ -177,6 +183,28 @@ fun TempasChip(
                     val pace = 16.6666667 / speed
                     val minutes = pace.toInt()
                     val seconds = ((pace % 1) * 60).toInt()
+
+                    if (lastLocation.provider != "" && settings.debug) {
+                        val debugSpeed = lastLocation.distanceTo(location) / ((location.time - lastLocation.time)/1000)
+                        val debugPace = 16.6666667 / debugSpeed
+                        val debugMinutes = debugPace.toInt()
+                        val debugSeconds = ((debugPace % 1) * 60).toInt()
+
+                        Log.i("debugSpeed", debugSpeed.toString())
+
+                        if ((speed - debugSpeed).absoluteValue > 1f) {
+                            Log.e("Speed mismatch", "Speed difference between speed value and distance over time over 1m/s")
+                        }
+                        @Suppress("KotlinConstantConditions")
+                        if (settings.debug) {
+                            debugString = if (settings.paceSetting == PaceSetting.pace) {
+                                "%02d:%02d".format(debugMinutes, debugSeconds)
+                            } else {
+                                "%.1f".format(debugSpeed * 3.6)
+                            }
+                        }
+                    }
+
                     resultString = if (settings.paceSetting == PaceSetting.pace) {
                         "%02d:%02d".format(minutes, seconds)
                     } else {
@@ -189,7 +217,7 @@ fun TempasChip(
                         "-.-"
                     }
                 }
-
+                lastLocation = location
             }
         }
 
@@ -211,13 +239,27 @@ fun TempasChip(
         }
     }
 
-    Chip(
-        onClick = {},
-        colors = ChipDefaults.chipColors(),
-        border = ChipDefaults.chipBorder()
-    ) {
-        Text(text = resultString, fontSize = 36.sp)
+    if (!settings.debug) {
+        Chip(
+            onClick = {},
+            colors = ChipDefaults.chipColors(),
+            border = ChipDefaults.chipBorder()
+        ) {
+            Text(text = resultString, fontSize = 36.sp)
+        }
+    } else {
+        Chip(
+            onClick = {},
+            colors = ChipDefaults.chipColors(),
+            border = ChipDefaults.chipBorder()
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = resultString)
+                VerticalDivider()
+                Text(text = debugString)
+            }
+        }
     }
-
-
 }
