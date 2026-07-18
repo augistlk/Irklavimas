@@ -35,6 +35,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.rotary.rotaryScrollable
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Icon
@@ -64,8 +66,9 @@ fun SettingsScreen() {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val settings by context.dataStore.data.collectAsState(initial = Settings())
-    LazyColumn(
-        Modifier.fillMaxSize()
+    ScalingLazyColumn(
+        Modifier
+            .fillMaxSize()
     ) {
         item {
             Text(

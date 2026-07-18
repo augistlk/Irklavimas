@@ -61,7 +61,7 @@ fun WearApp() {
                 innerPadding ->
                     IrklavimasNavHost(
                         navController = navController,
-                        modifier = Modifier.padding(innerPadding)
+                        //modifier = Modifier.padding(innerPadding)
                     )
             }
         }

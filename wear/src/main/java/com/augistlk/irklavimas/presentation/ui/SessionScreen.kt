@@ -164,9 +164,9 @@ fun TempasChip(
 
     if (settings.loaded) {
         GPSInterval = when(settings.energySaverSetting){
-            EnergySaverSetting.off -> 500
-            EnergySaverSetting.low -> 1000
-            EnergySaverSetting.high -> 2500
+            EnergySaverSetting.off -> 1000
+            EnergySaverSetting.low -> 2000
+            EnergySaverSetting.high -> 3000
         }
 
         val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, GPSInterval)
