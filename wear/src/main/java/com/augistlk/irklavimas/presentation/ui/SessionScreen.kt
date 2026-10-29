@@ -1,6 +1,7 @@
 package com.augistlk.irklavimas.presentation.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Looper
@@ -50,38 +51,40 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SessionScreen(){
-    var startGPSString by remember { mutableStateOf("NO GPS") }
+    val startGPSString = "NO GPS"
     val context = LocalContext.current
     val settings by context.dataStore.data.collectAsState(Settings(loaded = false))
     val permissionArray = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
 
+    var hasPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
     // Initialize the permission launcher
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ){
-
+    ){ permissions ->
+        hasPermission = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
     }
 
     // Use LaunchedEffect to check and request permissions when the screen opens
     LaunchedEffect(Unit) {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (!hasPermission) {
             permissionLauncher.launch(permissionArray)
         }
     }
 
-    if (ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    ) {
-        startGPSString = "GPS OK"
-    }
-
-    val startTime = remember { SystemClock.elapsedRealtime() }
+    val startTime = SystemClock.elapsedRealtime()
 
     val view = LocalView.current
     DisposableEffect(Unit) {
@@ -116,7 +119,9 @@ fun SessionScreen(){
             Text(text = tempasString)
             TempasChip(
                 startGPSString = startGPSString,
-                settings = settings
+                hasPermission = hasPermission,
+                settings = settings,
+                context = context
             )
         }
     }
@@ -154,9 +159,10 @@ fun ElapsedTimeChip(startTime: Long){
 @Composable
 fun TempasChip(
     startGPSString: String,
-    settings: Settings
+    hasPermission: Boolean,
+    settings: Settings,
+    context: Context
 ){
-    val context = LocalContext.current
     var resultString by remember { mutableStateOf(startGPSString) }
     var debugString by remember { mutableStateOf("DEBUG") }
     var GPSInterval: Long
@@ -221,17 +227,24 @@ fun TempasChip(
             }
         }
 
-        DisposableEffect(Unit) {
-            if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                fusedLocationClient.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback,
-                    Looper.getMainLooper()
-                )
+        DisposableEffect(hasPermission) {
+            if (hasPermission) {
+                if (ActivityCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    fusedLocationClient.requestLocationUpdates(
+                        locationRequest,
+                        locationCallback,
+                        Looper.getMainLooper()
+                    )
+                    resultString = "GPS OK"
+                }
             }
             onDispose {
                 fusedLocationClient.removeLocationUpdates(locationCallback)
